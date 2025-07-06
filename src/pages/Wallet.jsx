@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WalletIcon, Plus, Minus, CreditCard, History, TrendingUp, Key, Copy, Download, Trash2, Edit } from 'lucide-react';
+import { WalletIcon, Plus, CreditCard, History, TrendingUp, Key, Copy, Download, Trash2, Edit } from 'lucide-react';
 import './Wallet.css';
 import userDataAPI from '../api/userData';
 import outlineAPI from '../api/outlineAPI';
@@ -65,7 +65,7 @@ const WalletPage = () => {
   };
 
   const handleDeleteKey = async (keyId) => {
-    if (confirm('Вы уверены, что хотите удалить этот ключ?')) {
+    if (window.confirm('Вы уверены, что хотите удалить этот ключ?')) {
       try {
         await outlineAPI.deleteKey(keyId);
         // Обновляем список ключей
@@ -80,7 +80,7 @@ const WalletPage = () => {
   };
 
   const handleRenameKey = async (keyId, currentName) => {
-    const newName = prompt('Введите новое имя для ключа:', currentName);
+    const newName = window.prompt('Введите новое имя для ключа:', currentName);
     if (newName && newName.trim()) {
       try {
         await outlineAPI.renameKey(keyId, newName.trim());
