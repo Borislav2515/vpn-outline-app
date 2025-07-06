@@ -20,14 +20,11 @@ class UserDataAPI {
   // Получение статистики пользователя
   async getUserStats(userId) {
     try {
-      // Здесь будет реальный API запрос
-      // Пока возвращаем заглушку
-      return {
-        totalConnections: 0,
-        totalData: '0 ГБ',
-        favoriteServer: 'Нет данных',
-        lastConnection: 'Нет подключений'
-      };
+      const response = await fetch(`${this.baseUrl}/user/${userId}/stats`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения статистики:', error);
       return {
@@ -42,15 +39,11 @@ class UserDataAPI {
   // Получение трафика пользователя
   async getTrafficStats(userId) {
     try {
-      // Здесь будет реальный API запрос
-      return {
-        totalUsed: '0 ГБ',
-        totalLimit: '0 ГБ',
-        remaining: '0 ГБ',
-        period: '30 дней',
-        dailyAverage: '0 ГБ',
-        lastReset: 'Нет данных'
-      };
+      const response = await fetch(`${this.baseUrl}/user/${userId}/traffic`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения трафика:', error);
       return {
@@ -67,8 +60,11 @@ class UserDataAPI {
   // Получение активных ключей
   async getActiveKeys(userId) {
     try {
-      // Здесь будет реальный API запрос
-      return [];
+      const response = await fetch(`${this.baseUrl}/user/${userId}/keys`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения ключей:', error);
       return [];
@@ -78,12 +74,11 @@ class UserDataAPI {
   // Получение баланса
   async getBalance(userId) {
     try {
-      // Здесь будет реальный API запрос
-      return {
-        amount: '0.00',
-        currency: '₽',
-        status: 'Активен'
-      };
+      const response = await fetch(`${this.baseUrl}/user/${userId}/balance`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения баланса:', error);
       return {
@@ -97,8 +92,11 @@ class UserDataAPI {
   // Получение транзакций
   async getTransactions(userId) {
     try {
-      // Здесь будет реальный API запрос
-      return [];
+      const response = await fetch(`${this.baseUrl}/user/${userId}/transactions`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения транзакций:', error);
       return [];
@@ -108,8 +106,11 @@ class UserDataAPI {
   // Получение ключей Outline
   async getOutlineKeys(userId) {
     try {
-      // Здесь будет реальный API запрос
-      return [];
+      const response = await fetch(`${this.baseUrl}/user/${userId}/outline-keys`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Ошибка получения ключей Outline:', error);
       return [];
