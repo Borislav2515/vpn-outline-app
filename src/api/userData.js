@@ -118,4 +118,5 @@ class UserDataAPI {
   }
 }
 
-export default new UserDataAPI(); 
+const userDataAPI = new UserDataAPI();
+export default userDataAPI; 

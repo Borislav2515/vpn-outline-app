@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { WalletIcon, Plus, Minus, CreditCard, History, TrendingUp, Key, Copy, Download, Trash2 } from 'lucide-react';
+import { WalletIcon, Plus, Minus, CreditCard, History, TrendingUp, Key, Copy, Download, Trash2, Edit } from 'lucide-react';
 import './Wallet.css';
 import userDataAPI from '../api/userData';
+import outlineAPI from '../api/outlineAPI';
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -22,23 +23,80 @@ const WalletPage = () => {
       const telegramUser = userDataAPI.getTelegramUserData();
       
       if (telegramUser.id) {
-        const [balanceData, transactionsData, keysData] = await Promise.all([
+        const [balanceData, transactionsData] = await Promise.all([
           userDataAPI.getBalance(telegramUser.id),
-          userDataAPI.getTransactions(telegramUser.id),
-          userDataAPI.getOutlineKeys(telegramUser.id)
+          userDataAPI.getTransactions(telegramUser.id)
         ]);
         
         setBalance(balanceData);
         setTransactions(transactionsData);
+      }
+
+      // Загружаем реальные ключи Outline
+      try {
+        const keysData = await outlineAPI.getKeys();
         setOutlineKeys(keysData);
+      } catch (error) {
+        console.error('Ошибка загрузки ключей Outline:', error);
       }
     };
 
     loadWalletData();
   }, []);
 
+  const handleCopyKey = (key) => {
+    navigator.clipboard.writeText(key.accessUrl).then(() => {
+      alert('Ключ скопирован в буфер обмена!');
+    }).catch(() => {
+      alert('Ошибка копирования ключа');
+    });
+  };
+
+  const handleDownloadKey = (key) => {
+    const blob = new Blob([key.accessUrl], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${key.name}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteKey = async (keyId) => {
+    if (confirm('Вы уверены, что хотите удалить этот ключ?')) {
+      try {
+        await outlineAPI.deleteKey(keyId);
+        // Обновляем список ключей
+        const updatedKeys = await outlineAPI.getKeys();
+        setOutlineKeys(updatedKeys);
+        alert('Ключ успешно удален!');
+      } catch (error) {
+        console.error('Ошибка удаления ключа:', error);
+        alert('Ошибка удаления ключа');
+      }
+    }
+  };
+
+  const handleRenameKey = async (keyId, currentName) => {
+    const newName = prompt('Введите новое имя для ключа:', currentName);
+    if (newName && newName.trim()) {
+      try {
+        await outlineAPI.renameKey(keyId, newName.trim());
+        // Обновляем список ключей
+        const updatedKeys = await outlineAPI.getKeys();
+        setOutlineKeys(updatedKeys);
+        alert('Ключ успешно переименован!');
+      } catch (error) {
+        console.error('Ошибка переименования ключа:', error);
+        alert('Ошибка переименования ключа');
+      }
+    }
+  };
+
   const quickActions = [
-    { icon: Plus, title: 'Купить ключ', color: '#28a745' },
+    { icon: Plus, title: 'Создать ключ', color: '#28a745' },
     { icon: Key, title: 'Мои ключи', color: '#007bff' },
     { icon: History, title: 'История', color: '#6c757d' },
     { icon: TrendingUp, title: 'Статистика', color: '#ffc107' }
@@ -169,25 +227,32 @@ const WalletPage = () => {
                   
                   <div className="key-actions">
                     <button 
-                      className="key-action-btn copy"
-                      onClick={() => handleCopyKey(key.key)}
+                      className="key-action-btn"
+                      onClick={() => handleRenameKey(key.id, key.name)}
+                      title="Переименовать"
                     >
-                      <Copy size={16} />
-                      Копировать
+                      <Edit size={16} />
                     </button>
                     <button 
-                      className="key-action-btn download"
-                      onClick={() => handleDownloadKey(key.key, key.name)}
+                      className="key-action-btn"
+                      onClick={() => handleCopyKey(key)}
+                      title="Копировать"
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button 
+                      className="key-action-btn"
+                      onClick={() => handleDownloadKey(key)}
+                      title="Скачать"
                     >
                       <Download size={16} />
-                      Скачать
                     </button>
                     <button 
                       className="key-action-btn delete"
                       onClick={() => handleDeleteKey(key.id)}
+                      title="Удалить"
                     >
                       <Trash2 size={16} />
-                      Удалить
                     </button>
                   </div>
                 </div>

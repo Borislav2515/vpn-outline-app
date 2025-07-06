@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Download, Calendar, Globe, Key, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Server, Download, Calendar, Globe, Key, ShoppingCart, TrendingUp, Plus } from 'lucide-react';
 import './Dashboard.css';
 import userDataAPI from '../api/userData';
+import outlineAPI from '../api/outlineAPI';
 
 const Dashboard = () => {
-  const [selectedServer] = useState(null);
+  const [selectedServer, setSelectedServer] = useState(null);
   const [showServerList, setShowServerList] = useState(false);
+  const [serverInfo, setServerInfo] = useState(null);
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
 
   const servers = [
     { 
@@ -95,14 +98,49 @@ const Dashboard = () => {
         setTrafficStats(trafficData);
         setActiveKeys(keysData);
       }
+
+      // Загружаем информацию о Outline сервере
+      try {
+        const serverData = await outlineAPI.getServerInfo();
+        setServerInfo(serverData);
+        setSelectedServer({
+          id: serverData.id,
+          name: serverData.name,
+          flag: serverData.flag,
+          location: serverData.location,
+          price: '299 ₽',
+          speed: '1 Гбит/с',
+          load: '45%',
+          status: serverData.status
+        });
+      } catch (error) {
+        console.error('Ошибка загрузки информации о сервере:', error);
+      }
     };
 
     loadDashboardData();
   }, []);
 
-  const handleBuyKey = (server) => {
-    // Здесь будет логика покупки ключа
-    alert(`Покупка ключа для сервера ${server.name} за ${server.price}`);
+  const handleBuyKey = async (server) => {
+    if (!server) return;
+    
+    setIsCreatingKey(true);
+    try {
+      const keyName = `Ключ ${server.name} - ${new Date().toLocaleDateString()}`;
+      const newKey = await outlineAPI.createKey(keyName);
+      
+      alert(`Ключ успешно создан!\n\nИмя: ${newKey.name}\nКлюч: ${newKey.accessUrl}\n\nСкопируйте ключ для использования в Outline Client.`);
+      
+      // Обновляем список ключей
+      const updatedKeys = await outlineAPI.getKeys();
+      setActiveKeys(updatedKeys);
+      
+    } catch (error) {
+      console.error('Ошибка создания ключа:', error);
+      alert('Ошибка создания ключа. Попробуйте позже.');
+    } finally {
+      setIsCreatingKey(false);
+    }
   };
 
   return (
@@ -157,7 +195,7 @@ const Dashboard = () => {
             onClick={() => setShowServerList(!showServerList)}
           >
             <div className="server-info">
-              <span className="server-flag">🌐</span>
+              <span className="server-flag">{selectedServer ? selectedServer.flag : '🌐'}</span>
               <div className="server-details">
                 <span className="server-name">
                   {selectedServer ? selectedServer.name : 'Выберите сервер'}
@@ -190,9 +228,16 @@ const Dashboard = () => {
                     <button 
                       className="buy-btn"
                       onClick={() => handleBuyKey(server)}
+                      disabled={isCreatingKey}
                     >
-                      <ShoppingCart size={16} />
-                      Купить
+                      {isCreatingKey ? (
+                        <span>Создание...</span>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          Создать ключ
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

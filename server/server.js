@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -14,6 +15,11 @@ app.use(express.json());
 const users = new Map();
 const keys = new Map();
 const transactions = new Map();
+
+// Outline API конфигурация
+const OUTLINE_SERVER_ID = 'e5d439f5-a184-4ef6-8fc8-d4e8dea63d0c';
+const OUTLINE_API_URL = process.env.OUTLINE_API_URL || 'https://your-outline-server.com/api';
+const OUTLINE_API_KEY = process.env.OUTLINE_API_KEY || 'your-api-key';
 
 // Инициализация тестовых данных
 const initializeTestData = () => {
@@ -236,8 +242,216 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Outline API Routes
+
+// Получение информации о сервере
+app.get('/api/outline/server/:serverId', async (req, res) => {
+  try {
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY
+      }
+    });
+    
+    res.json({
+      id: OUTLINE_SERVER_ID,
+      name: 'США (Нью-Йорк)',
+      location: 'Нью-Йорк',
+      flag: '🇺🇸',
+      status: 'online',
+      ...response.data
+    });
+  } catch (error) {
+    console.error('Ошибка получения информации о сервере:', error.message);
+    res.status(500).json({ error: 'Ошибка подключения к Outline серверу' });
+  }
+});
+
+// Получение всех ключей сервера
+app.get('/api/outline/server/:serverId/keys', async (req, res) => {
+  try {
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys`, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY
+      }
+    });
+    
+    // Получаем метрики для каждого ключа
+    const keysWithStats = await Promise.all(
+      response.data.accessKeys.map(async (key) => {
+        try {
+          const metricsResponse = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, {
+            headers: {
+              'Api-Key': OUTLINE_API_KEY
+            }
+          });
+          
+          const bytesTransferred = metricsResponse.data.bytesTransferredByUserId[key.id] || 0;
+          
+          return {
+            ...key,
+            trafficUsed: formatBytes(bytesTransferred),
+            trafficLimit: '50 ГБ',
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 дней
+          };
+        } catch (metricsError) {
+          console.error('Ошибка получения метрик для ключа:', key.id, metricsError.message);
+          return {
+            ...key,
+            trafficUsed: '0 Б',
+            trafficLimit: '50 ГБ',
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          };
+        }
+      })
+    );
+    
+    res.json(keysWithStats);
+  } catch (error) {
+    console.error('Ошибка получения ключей:', error.message);
+    res.status(500).json({ error: 'Ошибка получения ключей' });
+  }
+});
+
+// Создание нового ключа
+app.post('/api/outline/server/:serverId/keys', async (req, res) => {
+  try {
+    const { name, method = 'aes-256-gcm', password } = req.body;
+    
+    const response = await axios.post(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys`, {
+      method,
+      password
+    }, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    // Переименовываем ключ если указано имя
+    if (name && response.data.id) {
+      await axios.put(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${response.data.id}/name`, {
+        name
+      }, {
+        headers: {
+          'Api-Key': OUTLINE_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    
+    res.json({
+      ...response.data,
+      name: name || 'Новый ключ',
+      trafficUsed: '0 Б',
+      trafficLimit: '50 ГБ',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    });
+  } catch (error) {
+    console.error('Ошибка создания ключа:', error.message);
+    res.status(500).json({ error: 'Ошибка создания ключа' });
+  }
+});
+
+// Удаление ключа
+app.delete('/api/outline/server/:serverId/keys/:keyId', async (req, res) => {
+  try {
+    const { keyId } = req.params;
+    
+    await axios.delete(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${keyId}`, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Ошибка удаления ключа:', error.message);
+    res.status(500).json({ error: 'Ошибка удаления ключа' });
+  }
+});
+
+// Переименование ключа
+app.put('/api/outline/server/:serverId/keys/:keyId/name', async (req, res) => {
+  try {
+    const { keyId } = req.params;
+    const { name } = req.body;
+    
+    const response = await axios.put(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${keyId}/name`, {
+      name
+    }, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Ошибка переименования ключа:', error.message);
+    res.status(500).json({ error: 'Ошибка переименования ключа' });
+  }
+});
+
+// Получение метрик сервера
+app.get('/api/outline/server/:serverId/metrics', async (req, res) => {
+  try {
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Ошибка получения метрик:', error.message);
+    res.status(500).json({ error: 'Ошибка получения метрик' });
+  }
+});
+
+// Проверка статуса сервера
+app.get('/api/outline/server/:serverId/status', async (req, res) => {
+  try {
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, {
+      headers: {
+        'Api-Key': OUTLINE_API_KEY
+      }
+    });
+    
+    res.json({
+      status: 'online',
+      uptime: Date.now(),
+      version: '1.0.0',
+      ...response.data
+    });
+  } catch (error) {
+    console.error('Ошибка проверки статуса:', error.message);
+    res.json({
+      status: 'offline',
+      uptime: 0,
+      version: 'unknown'
+    });
+  }
+});
+
+// Функция форматирования байтов
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 Б';
+  const k = 1024;
+  const sizes = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 API сервер запущен на порту ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Outline API: ${OUTLINE_API_URL}`);
 }); 
