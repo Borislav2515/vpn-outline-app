@@ -36,6 +36,14 @@ bot.onText(/\/start/, async (msg) => {
   const webAppUrl = `${config.WEBAPP_URL}?user_id=${msg.from.id}&first_name=${encodeURIComponent(msg.from.first_name)}&last_name=${encodeURIComponent(msg.from.last_name || '')}&username=${encodeURIComponent(msg.from.username || '')}&is_bot=${msg.from.is_bot}&language_code=${encodeURIComponent(msg.from.language_code || '')}`;
   
   console.log('🔗 URL веб-приложения:', webAppUrl);
+  console.log('📱 Данные для передачи:', {
+    user_id: msg.from.id,
+    first_name: msg.from.first_name,
+    last_name: msg.from.last_name || '',
+    username: msg.from.username || '',
+    is_bot: msg.from.is_bot,
+    language_code: msg.from.language_code || ''
+  });
   
   const keyboard = {
     inline_keyboard: [

@@ -7,7 +7,7 @@ class UserDataAPI {
   // Получение данных пользователя из URL параметров
   getTelegramUserData() {
     const urlParams = new URLSearchParams(window.location.search);
-    return {
+    const data = {
       id: urlParams.get('user_id'),
       first_name: urlParams.get('first_name'),
       last_name: urlParams.get('last_name'),
@@ -15,6 +15,12 @@ class UserDataAPI {
       language_code: urlParams.get('language_code'),
       is_bot: urlParams.get('is_bot') === 'true'
     };
+    
+    console.log('🔍 userDataAPI.getTelegramUserData() вызван');
+    console.log('🔍 URL параметры:', window.location.search);
+    console.log('🔍 Извлечённые данные:', data);
+    
+    return data;
   }
 
   // Получение статистики пользователя

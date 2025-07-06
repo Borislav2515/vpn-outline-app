@@ -18,19 +18,25 @@ const Profile = () => {
   // Получаем данные пользователя из URL параметров (Telegram Web App)
   useEffect(() => {
     const loadUserData = async () => {
+      console.log('🚀 Profile useEffect запущен');
+      console.log('🔍 Полный URL:', window.location.href);
+      
       const telegramUser = userDataAPI.getTelegramUserData();
       
       console.log('🔍 Полученные данные из URL:', telegramUser);
-      console.log('🔍 Все URL параметры:', window.location.search);
 
       if (telegramUser.first_name) {
         const fullName = telegramUser.last_name 
           ? `${telegramUser.first_name} ${telegramUser.last_name}`
           : telegramUser.first_name;
         
+        console.log('👤 Полное имя:', fullName);
+        
         // Определяем пол по имени (простая логика)
         const isMale = /[а-яё]*(ов|ев|ин|ый|ой|ий|овский|евский|инский)$/i.test(fullName);
         const isFemale = /[а-яё]*(ова|ева|ина|ая|яя|ая|овская|евская|инская)$/i.test(fullName);
+        
+        console.log('🔍 Проверка пола - мужской:', isMale, 'женский:', isFemale);
         
         let gender = 'unknown';
         let avatar = '👤';
@@ -42,6 +48,8 @@ const Profile = () => {
           gender = 'female';
           avatar = '👩';
         }
+
+        console.log('👤 Итоговый пол:', gender, 'аватар:', avatar);
 
         setUser({
           name: fullName,
@@ -60,6 +68,8 @@ const Profile = () => {
           const userStats = await userDataAPI.getUserStats(telegramUser.id);
           setStats(userStats);
         }
+      } else {
+        console.log('⚠️ Имя пользователя не найдено в URL параметрах');
       }
     };
 
