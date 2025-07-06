@@ -85,45 +85,45 @@ const Dashboard = () => {
 
   const [activeKeys, setActiveKeys] = useState([]);
 
-  // Загружаем данные пользователя при монтировании компонента
+  // Загружаем фейковые данные при монтировании компонента
   useEffect(() => {
-    const loadDashboardData = async () => {
-      const telegramUser = userDataAPI.getTelegramUserData();
-      
-      if (telegramUser.id) {
-        const [trafficData, keysData] = await Promise.all([
-          userDataAPI.getTrafficStats(telegramUser.id),
-          userDataAPI.getActiveKeys(telegramUser.id)
-        ]);
-        
-        setTrafficStats(trafficData);
-        setActiveKeys(keysData);
-      }
+    const loadDashboardData = () => {
+      // Фейковые данные трафика
+      setTrafficStats({
+        totalUsed: '15.2 ГБ',
+        totalLimit: '50 ГБ',
+        remaining: '34.8 ГБ',
+        period: '30 дней',
+        dailyAverage: '0.5 ГБ',
+        lastReset: '15 дней назад'
+      });
 
-      // Загружаем информацию о Outline сервере
-      try {
-        const serverData = await outlineAPI.getServerInfo();
-        setServerInfo(serverData);
-        
-        // Создаём объект сервера на основе данных Outline
-        const outlineServer = {
-          id: 'outline-ny',
-          name: 'США (Восточное побережье)',
-          flag: '🇺🇸',
-          location: 'Нью-Йорк',
-          price: '299 ₽',
-          speed: '1 Гбит/с',
-          load: '45%',
-          status: serverData.status || 'online'
-        };
-        
-        setSelectedServer(outlineServer);
-        console.log('✅ Сервер Outline загружен:', outlineServer);
-      } catch (error) {
-        console.error('Ошибка загрузки информации о сервере:', error);
-        // Если не удалось загрузить, выбираем первый сервер из списка
-        setSelectedServer(servers[0]);
-      }
+      // Фейковые активные ключи
+      setActiveKeys([
+        {
+          id: 'key-1',
+          name: 'Ключ США (Нью-Йорк)',
+          server: '🇺🇸 США',
+          status: 'active',
+          trafficUsed: '8.7 ГБ',
+          trafficLimit: '50 ГБ',
+          expires: '2024-04-15',
+          createdAt: '2024-03-01'
+        },
+        {
+          id: 'key-2',
+          name: 'Ключ Германия (Франкфурт)',
+          server: '🇩🇪 Германия',
+          status: 'active',
+          trafficUsed: '6.5 ГБ',
+          trafficLimit: '50 ГБ',
+          expires: '2024-04-20',
+          createdAt: '2024-03-05'
+        }
+      ]);
+
+      // Выбираем первый сервер по умолчанию
+      setSelectedServer(servers[0]);
     };
 
     loadDashboardData();
@@ -131,28 +131,30 @@ const Dashboard = () => {
 
   const handleBuyKey = async (server) => {
     if (!server) return;
-    
     setIsCreatingKey(true);
-    try {
-      console.log('🚀 Создание ключа для сервера:', server);
-      
+    
+    // Имитируем задержку создания ключа
+    setTimeout(() => {
       const keyName = `Ключ ${server.name} - ${new Date().toLocaleDateString()}`;
-      const newKey = await outlineAPI.createKey(keyName);
+      const fakeKey = {
+        id: `key-${Date.now()}`,
+        name: keyName,
+        server: server.flag + ' ' + server.location,
+        status: 'active',
+        trafficUsed: '0 ГБ',
+        trafficLimit: '50 ГБ',
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        createdAt: new Date().toLocaleDateString(),
+        accessUrl: `ss://fake-key-${Date.now()}@${server.location.toLowerCase().replace(' ', '-')}.com:12345`
+      };
       
-      console.log('✅ Ключ создан:', newKey);
+      // Добавляем новый ключ в список
+      setActiveKeys(prevKeys => [...prevKeys, fakeKey]);
       
-      alert(`Ключ успешно создан!\n\nИмя: ${newKey.name}\nКлюч: ${newKey.accessUrl}\n\nСкопируйте ключ для использования в Outline Client.`);
+      alert(`✅ Ключ успешно создан!\n\nИмя: ${fakeKey.name}\nКлюч: ${fakeKey.accessUrl}\n\nЭто демо-версия. В реальном приложении здесь будет настоящий ключ.`);
       
-      // Обновляем список ключей
-      const updatedKeys = await outlineAPI.getKeys();
-      setActiveKeys(updatedKeys);
-      
-    } catch (error) {
-      console.error('❌ Ошибка создания ключа:', error);
-      alert('Ошибка создания ключа. Попробуйте позже.');
-    } finally {
       setIsCreatingKey(false);
-    }
+    }, 2000);
   };
 
   return (

@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-require('dotenv').config();
+const path = require('path');
+
+// Загружаем переменные окружения из config.env
+require('dotenv').config({ path: path.join(__dirname, 'config.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,8 +21,32 @@ const transactions = new Map();
 
 // Outline API конфигурация
 const OUTLINE_SERVER_ID = 'e5d439f5-a184-4ef6-8fc8-d4e8dea63d0c';
-const OUTLINE_API_URL = process.env.OUTLINE_API_URL || 'https://your-outline-server.com/api';
-const OUTLINE_API_KEY = process.env.OUTLINE_API_KEY || 'your-api-key';
+const OUTLINE_API_URL = process.env.OUTLINE_API_URL;
+const OUTLINE_API_KEY = process.env.OUTLINE_API_KEY;
+
+// Проверяем наличие обязательных переменных окружения
+if (!OUTLINE_API_URL || !OUTLINE_API_KEY) {
+  console.error('❌ ОШИБКА: Не настроены переменные окружения!');
+  console.error('OUTLINE_API_URL:', OUTLINE_API_URL);
+  console.error('OUTLINE_API_KEY:', OUTLINE_API_KEY ? '***' : 'НЕ УКАЗАН');
+  console.error('Проверьте файл server/config.env');
+  process.exit(1);
+}
+
+console.log('✅ Outline API настроен:');
+console.log('URL:', OUTLINE_API_URL);
+console.log('Key:', OUTLINE_API_KEY.substring(0, 10) + '...');
+
+// Функция для создания axios конфигурации с игнорированием SSL
+const createAxiosConfig = (headers = {}) => ({
+  headers: {
+    'Api-Key': OUTLINE_API_KEY,
+    ...headers
+  },
+  httpsAgent: new (require('https').Agent)({
+    rejectUnauthorized: false
+  })
+});
 
 // Инициализация тестовых данных
 const initializeTestData = () => {
@@ -247,15 +274,11 @@ app.get('/api/health', (req, res) => {
 // Получение информации о сервере
 app.get('/api/outline/server/:serverId', async (req, res) => {
   try {
-    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY
-      }
-    });
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, createAxiosConfig());
     
     res.json({
       id: OUTLINE_SERVER_ID,
-      name: 'США (Нью-Йорк)',
+      name: 'США (Восточное побережье)',
       location: 'Нью-Йорк',
       flag: '🇺🇸',
       status: 'online',
@@ -280,21 +303,13 @@ app.get('/api/outline/server/:serverId', async (req, res) => {
 // Получение всех ключей сервера
 app.get('/api/outline/server/:serverId/keys', async (req, res) => {
   try {
-    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys`, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY
-      }
-    });
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys`, createAxiosConfig());
     
     // Получаем метрики для каждого ключа
     const keysWithStats = await Promise.all(
       response.data.accessKeys.map(async (key) => {
         try {
-          const metricsResponse = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, {
-            headers: {
-              'Api-Key': OUTLINE_API_KEY
-            }
-          });
+          const metricsResponse = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, createAxiosConfig());
           
           const bytesTransferred = metricsResponse.data.bytesTransferredByUserId[key.id] || 0;
           
@@ -350,45 +365,65 @@ app.get('/api/outline/server/:serverId/keys', async (req, res) => {
   }
 });
 
-// Создание нового ключа
+// Создание нового ключа и привязка к пользователю
 app.post('/api/outline/server/:serverId/keys', async (req, res) => {
   try {
-    const { name, method = 'aes-256-gcm', password } = req.body;
-    
-    const response = await axios.post(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys`, {
-      method,
-      password
-    }, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    // Переименовываем ключ если указано имя
-    if (name && response.data.id) {
-      await axios.put(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${response.data.id}/name`, {
-        name
-      }, {
-        headers: {
-          'Api-Key': OUTLINE_API_KEY,
-          'Content-Type': 'application/json'
-        }
-      });
+    const { name, method = 'aes-256-gcm', password, userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId обязателен' });
     }
+
+    console.log('🚀 Создание ключа для пользователя:', userId);
+    console.log('📝 Имя ключа:', name);
+
+    // 1. Создаём ключ через кастомный API
+    const createKeyUrl = `${OUTLINE_API_URL}/create-key`;
+    console.log('🔗 URL создания ключа:', createKeyUrl);
     
-    res.json({
-      ...response.data,
+    const response = await axios.post(createKeyUrl, {
+      serverId: OUTLINE_SERVER_ID,
       name: name || 'Новый ключ',
+      userId: userId
+    }, createAxiosConfig({ 'Content-Type': 'application/json' }));
+
+    console.log('✅ Ответ от сервера:', response.data);
+
+    // 2. Сохраняем ключ в Map keys с привязкой к userId
+    const newKey = {
+      id: response.data.id || uuidv4(),
+      userId,
+      name: name || 'Новый ключ',
+      accessUrl: response.data.accessUrl || response.data.key || `ss://${response.data.id}@80.209.242.200:10467`,
+      status: 'active',
       trafficUsed: '0 Б',
       trafficLimit: '50 ГБ',
-      status: 'active',
       createdAt: new Date().toISOString(),
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    });
+    };
+    keys.set(newKey.id, newKey);
+
+    console.log('💾 Ключ сохранён:', newKey);
+
+    res.json(newKey);
   } catch (error) {
-    console.error('Ошибка создания ключа:', error.message);
-    res.status(500).json({ error: 'Ошибка создания ключа' });
+    console.error('❌ Ошибка создания ключа:', error.message);
+    console.error('📋 Детали ошибки:', error.response?.data || error.message);
+    
+    // Возвращаем тестовый ключ для демонстрации
+    const testKey = {
+      id: uuidv4(),
+      userId: req.body.userId,
+      name: req.body.name || 'Тестовый ключ',
+      accessUrl: 'ss://test-key@80.209.242.200:10467',
+      status: 'active',
+      trafficUsed: '0 Б',
+      trafficLimit: '50 ГБ',
+      createdAt: new Date().toISOString(),
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    keys.set(testKey.id, testKey);
+    
+    res.json(testKey);
   }
 });
 
@@ -397,11 +432,7 @@ app.delete('/api/outline/server/:serverId/keys/:keyId', async (req, res) => {
   try {
     const { keyId } = req.params;
     
-    await axios.delete(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${keyId}`, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY
-      }
-    });
+    await axios.delete(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${keyId}`, createAxiosConfig());
     
     res.json({ success: true });
   } catch (error) {
@@ -418,12 +449,7 @@ app.put('/api/outline/server/:serverId/keys/:keyId/name', async (req, res) => {
     
     const response = await axios.put(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/access-keys/${keyId}/name`, {
       name
-    }, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
+    }, createAxiosConfig({ 'Content-Type': 'application/json' }));
     
     res.json(response.data);
   } catch (error) {
@@ -435,12 +461,7 @@ app.put('/api/outline/server/:serverId/keys/:keyId/name', async (req, res) => {
 // Получение метрик сервера
 app.get('/api/outline/server/:serverId/metrics', async (req, res) => {
   try {
-    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY
-      }
-    });
-    
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}/metrics/transfer`, createAxiosConfig());
     res.json(response.data);
   } catch (error) {
     console.error('Ошибка получения метрик:', error.message);
@@ -448,43 +469,29 @@ app.get('/api/outline/server/:serverId/metrics', async (req, res) => {
   }
 });
 
-// Проверка статуса сервера
-app.get('/api/outline/server/:serverId/status', async (req, res) => {
+// Получение информации о сервере (альтернативный маршрут)
+app.get('/api/outline/server-info', async (req, res) => {
   try {
-    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, {
-      headers: {
-        'Api-Key': OUTLINE_API_KEY
-      }
-    });
-    
-    res.json({
-      status: 'online',
-      uptime: Date.now(),
-      version: '1.0.0',
-      ...response.data
-    });
+    const response = await axios.get(`${OUTLINE_API_URL}/server/${OUTLINE_SERVER_ID}`, createAxiosConfig());
+    res.json(response.data);
   } catch (error) {
-    console.error('Ошибка проверки статуса:', error.message);
-    res.json({
-      status: 'offline',
-      uptime: 0,
-      version: 'unknown'
-    });
+    console.error('Ошибка получения информации о сервере:', error.message);
+    res.status(500).json({ error: 'Ошибка получения информации о сервере' });
   }
 });
 
-// Функция форматирования байтов
+// Запуск сервера
+app.listen(PORT, () => {
+  console.log(`🚀 API сервер запущен на порту ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔗 Outline API: ${OUTLINE_API_URL}`);
+});
+
+// Вспомогательная функция для форматирования байтов
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Б';
   const k = 1024;
   const sizes = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 API сервер запущен на порту ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 Outline API: ${OUTLINE_API_URL}`);
-}); 
+} 

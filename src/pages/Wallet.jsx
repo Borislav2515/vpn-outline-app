@@ -17,28 +17,66 @@ const WalletPage = () => {
 
   const [transactions, setTransactions] = useState([]);
 
-  // Загружаем данные кошелька при монтировании компонента
+  // Загружаем фейковые данные кошелька
   useEffect(() => {
-    const loadWalletData = async () => {
-      const telegramUser = userDataAPI.getTelegramUserData();
-      
-      if (telegramUser.id) {
-        const [balanceData, transactionsData] = await Promise.all([
-          userDataAPI.getBalance(telegramUser.id),
-          userDataAPI.getTransactions(telegramUser.id)
-        ]);
-        
-        setBalance(balanceData);
-        setTransactions(transactionsData);
-      }
+    const loadWalletData = () => {
+      // Фейковый баланс
+      setBalance({
+        amount: '1,250.00',
+        currency: '₽',
+        status: 'Активен'
+      });
 
-      // Загружаем реальные ключи Outline
-      try {
-        const keysData = await outlineAPI.getKeys();
-        setOutlineKeys(keysData);
-      } catch (error) {
-        console.error('Ошибка загрузки ключей Outline:', error);
-      }
+      // Фейковые транзакции
+      setTransactions([
+        {
+          id: '1',
+          type: 'income',
+          amount: 500.00,
+          description: 'Пополнение счета',
+          date: '2024-03-15'
+        },
+        {
+          id: '2',
+          type: 'expense',
+          amount: -299.00,
+          description: 'Покупка ключа США',
+          date: '2024-03-10'
+        },
+        {
+          id: '3',
+          type: 'income',
+          amount: 1000.00,
+          description: 'Пополнение счета',
+          date: '2024-03-01'
+        }
+      ]);
+
+      // Фейковые ключи Outline
+      setOutlineKeys([
+        {
+          id: 'key-1',
+          name: 'Ключ США (Нью-Йорк)',
+          server: '🇺🇸 США',
+          status: 'active',
+          trafficUsed: '8.7 ГБ',
+          trafficLimit: '50 ГБ',
+          createdAt: '2024-03-01',
+          expires: '2024-04-15',
+          accessUrl: 'ss://fake-key-1@us-east.com:12345'
+        },
+        {
+          id: 'key-2',
+          name: 'Ключ Германия (Франкфурт)',
+          server: '🇩🇪 Германия',
+          status: 'active',
+          trafficUsed: '6.5 ГБ',
+          trafficLimit: '50 ГБ',
+          createdAt: '2024-03-05',
+          expires: '2024-04-20',
+          accessUrl: 'ss://fake-key-2@de-frankfurt.com:12345'
+        }
+      ]);
     };
 
     loadWalletData();
@@ -66,32 +104,22 @@ const WalletPage = () => {
 
   const handleDeleteKey = async (keyId) => {
     if (window.confirm('Вы уверены, что хотите удалить этот ключ?')) {
-      try {
-        await outlineAPI.deleteKey(keyId);
-        // Обновляем список ключей
-        const updatedKeys = await outlineAPI.getKeys();
-        setOutlineKeys(updatedKeys);
-        alert('Ключ успешно удален!');
-      } catch (error) {
-        console.error('Ошибка удаления ключа:', error);
-        alert('Ошибка удаления ключа');
-      }
+      // Удаляем ключ из локального состояния
+      setOutlineKeys(prevKeys => prevKeys.filter(key => key.id !== keyId));
+      alert('Ключ успешно удален! (демо-версия)');
     }
   };
 
   const handleRenameKey = async (keyId, currentName) => {
     const newName = window.prompt('Введите новое имя для ключа:', currentName);
     if (newName && newName.trim()) {
-      try {
-        await outlineAPI.renameKey(keyId, newName.trim());
-        // Обновляем список ключей
-        const updatedKeys = await outlineAPI.getKeys();
-        setOutlineKeys(updatedKeys);
-        alert('Ключ успешно переименован!');
-      } catch (error) {
-        console.error('Ошибка переименования ключа:', error);
-        alert('Ошибка переименования ключа');
-      }
+      // Обновляем имя ключа в локальном состоянии
+      setOutlineKeys(prevKeys => 
+        prevKeys.map(key => 
+          key.id === keyId ? { ...key, name: newName.trim() } : key
+        )
+      );
+      alert('Ключ успешно переименован! (демо-версия)');
     }
   };
 

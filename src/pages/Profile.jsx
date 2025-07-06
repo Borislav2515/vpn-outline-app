@@ -15,62 +15,29 @@ const Profile = () => {
     gender: 'unknown'
   });
 
-  // Получаем данные пользователя из URL параметров (Telegram Web App)
+  // Загружаем фейковые данные пользователя
   useEffect(() => {
-    const loadUserData = async () => {
-      console.log('🚀 Profile useEffect запущен');
-      console.log('🔍 Полный URL:', window.location.href);
-      
-      const telegramUser = userDataAPI.getTelegramUserData();
-      
-      console.log('🔍 Полученные данные из URL:', telegramUser);
+    const loadUserData = () => {
+      // Фейковые данные пользователя
+      setUser({
+        name: 'Александр Петров',
+        email: 'alex@telegram.org',
+        joinDate: '15 марта 2024',
+        plan: 'Premium',
+        status: 'Активен',
+        avatar: '👨',
+        gender: 'male',
+        telegramId: '123456789',
+        username: 'alex_petrov'
+      });
 
-      if (telegramUser.first_name) {
-        const fullName = telegramUser.last_name 
-          ? `${telegramUser.first_name} ${telegramUser.last_name}`
-          : telegramUser.first_name;
-        
-        console.log('👤 Полное имя:', fullName);
-        
-        // Определяем пол по имени (простая логика)
-        const isMale = /[а-яё]*(ов|ев|ин|ый|ой|ий|овский|евский|инский)$/i.test(fullName);
-        const isFemale = /[а-яё]*(ова|ева|ина|ая|яя|ая|овская|евская|инская)$/i.test(fullName);
-        
-        console.log('🔍 Проверка пола - мужской:', isMale, 'женский:', isFemale);
-        
-        let gender = 'unknown';
-        let avatar = '👤';
-        
-        if (isMale) {
-          gender = 'male';
-          avatar = '👨';
-        } else if (isFemale) {
-          gender = 'female';
-          avatar = '👩';
-        }
-
-        console.log('👤 Итоговый пол:', gender, 'аватар:', avatar);
-
-        setUser({
-          name: fullName,
-          email: telegramUser.username ? `${telegramUser.username}@telegram.org` : 'user@telegram.org',
-          joinDate: 'Сегодня',
-          plan: 'Premium',
-          status: 'Активен',
-          avatar: avatar,
-          gender: gender,
-          telegramId: telegramUser.id,
-          username: telegramUser.username
-        });
-
-        // Загружаем статистику пользователя
-        if (telegramUser.id) {
-          const userStats = await userDataAPI.getUserStats(telegramUser.id);
-          setStats(userStats);
-        }
-      } else {
-        console.log('⚠️ Имя пользователя не найдено в URL параметрах');
-      }
+      // Фейковая статистика
+      setStats({
+        totalConnections: 127,
+        totalData: '23.9 ГБ',
+        favoriteServer: 'США (Нью-Йорк)',
+        lastConnection: '2 часа назад'
+      });
     };
 
     loadUserData();
