@@ -25,6 +25,9 @@ const Profile = () => {
       language_code: urlParams.get('language_code')
     };
 
+    console.log('🔍 Полученные данные из URL:', telegramUser);
+    console.log('🔍 Все URL параметры:', window.location.search);
+
     if (telegramUser.first_name) {
       const fullName = telegramUser.last_name 
         ? `${telegramUser.first_name} ${telegramUser.last_name}`

@@ -12,6 +12,15 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const username = msg.from.first_name;
   
+  // Логируем данные пользователя
+  console.log('📱 Данные пользователя Telegram:', {
+    id: msg.from.id,
+    first_name: msg.from.first_name,
+    last_name: msg.from.last_name,
+    username: msg.from.username,
+    language_code: msg.from.language_code
+  });
+  
   const welcomeMessage = `Привет, ${username}! 👋
 
 Добро пожаловать в R14-VPN! 
@@ -24,13 +33,17 @@ bot.onText(/\/start/, async (msg) => {
 
 Нажмите кнопку ниже, чтобы открыть приложение:`;
 
+  const webAppUrl = `${config.WEBAPP_URL}?user_id=${msg.from.id}&first_name=${encodeURIComponent(msg.from.first_name)}&last_name=${encodeURIComponent(msg.from.last_name || '')}&username=${encodeURIComponent(msg.from.username || '')}&is_bot=${msg.from.is_bot}&language_code=${encodeURIComponent(msg.from.language_code || '')}`;
+  
+  console.log('🔗 URL веб-приложения:', webAppUrl);
+  
   const keyboard = {
     inline_keyboard: [
       [
         {
           text: '🚀 Открыть приложение',
           web_app: {
-            url: `${config.WEBAPP_URL}?user_id=${msg.from.id}&first_name=${encodeURIComponent(msg.from.first_name)}&last_name=${encodeURIComponent(msg.from.last_name || '')}&username=${encodeURIComponent(msg.from.username || '')}&is_bot=${msg.from.is_bot}&language_code=${encodeURIComponent(msg.from.language_code || '')}`
+            url: webAppUrl
           }
         }
       ],
