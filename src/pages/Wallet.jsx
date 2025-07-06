@@ -1,67 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WalletIcon, Plus, Minus, CreditCard, History, TrendingUp, Key, Copy, Download, Trash2 } from 'lucide-react';
 import './Wallet.css';
+import userDataAPI from '../api/userData';
 
 const WalletPage = () => {
   const [activeTab, setActiveTab] = useState('keys');
 
-  const balance = {
-    amount: '2,450.00',
+  const [balance, setBalance] = useState({
+    amount: '0.00',
     currency: '₽',
     status: 'Активен'
-  };
+  });
 
-  const outlineKeys = [
-    {
-      id: 1,
-      name: 'Ключ США (Нью-Йорк)',
-      server: 'us-east.outline.com',
-      key: 'ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@us-east.outline.com:12345',
-      status: 'active',
-      trafficUsed: '15.2 ГБ',
-      trafficLimit: '50 ГБ',
-      expires: '2024-04-15',
-      createdAt: '2024-03-01'
-    },
-    {
-      id: 2,
-      name: 'Ключ Германия (Франкфурт)',
-      server: 'de.outline.com',
-      key: 'ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@de.outline.com:12345',
-      status: 'active',
-      trafficUsed: '8.7 ГБ',
-      trafficLimit: '50 ГБ',
-      expires: '2024-04-20',
-      createdAt: '2024-03-05'
-    }
-  ];
+  const [outlineKeys, setOutlineKeys] = useState([]);
 
-  const transactions = [
-    {
-      id: 1,
-      type: 'income',
-      amount: '+500.00',
-      description: 'Пополнение счета',
-      date: 'Сегодня, 14:30',
-      icon: Plus
-    },
-    {
-      id: 2,
-      type: 'expense',
-      amount: '-299.00',
-      description: 'Покупка ключа США',
-      date: 'Вчера, 09:15',
-      icon: Minus
-    },
-    {
-      id: 3,
-      type: 'expense',
-      amount: '-349.00',
-      description: 'Покупка ключа Германия',
-      date: '5 марта 2024',
-      icon: Minus
-    }
-  ];
+  const [transactions, setTransactions] = useState([]);
+
+  // Загружаем данные кошелька при монтировании компонента
+  useEffect(() => {
+    const loadWalletData = async () => {
+      const telegramUser = userDataAPI.getTelegramUserData();
+      
+      if (telegramUser.id) {
+        const [balanceData, transactionsData, keysData] = await Promise.all([
+          userDataAPI.getBalance(telegramUser.id),
+          userDataAPI.getTransactions(telegramUser.id),
+          userDataAPI.getOutlineKeys(telegramUser.id)
+        ]);
+        
+        setBalance(balanceData);
+        setTransactions(transactionsData);
+        setOutlineKeys(keysData);
+      }
+    };
+
+    loadWalletData();
+  }, []);
 
   const quickActions = [
     { icon: Plus, title: 'Купить ключ', color: '#28a745' },

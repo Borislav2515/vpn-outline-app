@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Server, Download, Calendar, Globe, Key, ShoppingCart, TrendingUp } from 'lucide-react';
 import './Dashboard.css';
+import userDataAPI from '../api/userData';
 
 const Dashboard = () => {
   const [selectedServer] = useState(null);
@@ -69,19 +70,35 @@ const Dashboard = () => {
     }
   ];
 
-  const trafficStats = {
-    totalUsed: '45.2 ГБ',
-    totalLimit: '100 ГБ',
-    remaining: '54.8 ГБ',
+  const [trafficStats, setTrafficStats] = useState({
+    totalUsed: '0 ГБ',
+    totalLimit: '0 ГБ',
+    remaining: '0 ГБ',
     period: '30 дней',
-    dailyAverage: '1.5 ГБ',
-    lastReset: '15 дней назад'
-  };
+    dailyAverage: '0 ГБ',
+    lastReset: 'Нет данных'
+  });
 
-  const activeKeys = [
-    { id: 1, server: 'США (Восточное побережье)', status: 'active', expires: '2024-04-15' },
-    { id: 2, server: 'Германия', status: 'active', expires: '2024-04-20' }
-  ];
+  const [activeKeys, setActiveKeys] = useState([]);
+
+  // Загружаем данные пользователя при монтировании компонента
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      const telegramUser = userDataAPI.getTelegramUserData();
+      
+      if (telegramUser.id) {
+        const [trafficData, keysData] = await Promise.all([
+          userDataAPI.getTrafficStats(telegramUser.id),
+          userDataAPI.getActiveKeys(telegramUser.id)
+        ]);
+        
+        setTrafficStats(trafficData);
+        setActiveKeys(keysData);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const handleBuyKey = (server) => {
     // Здесь будет логика покупки ключа
