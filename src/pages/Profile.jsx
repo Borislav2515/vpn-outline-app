@@ -1,18 +1,63 @@
-import React, { useState } from 'react';
-import { Mail, Calendar, Shield, Settings, LogOut, Edit, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Calendar, Shield, Settings, Edit, Camera, User } from 'lucide-react';
 import './Profile.css';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  
-  const user = {
-    name: 'Александр Петров',
-    email: 'alex.petrov@example.com',
-    joinDate: '15 марта 2024',
+  const [user, setUser] = useState({
+    name: 'Пользователь',
+    email: 'user@example.com',
+    joinDate: 'Сегодня',
     plan: 'Premium',
     status: 'Активен',
-    avatar: '👤'
-  };
+    avatar: '👤',
+    gender: 'unknown'
+  });
+
+  // Получаем данные пользователя из URL параметров (Telegram Web App)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const telegramUser = {
+      id: urlParams.get('user_id'),
+      first_name: urlParams.get('first_name'),
+      last_name: urlParams.get('last_name'),
+      username: urlParams.get('username'),
+      language_code: urlParams.get('language_code')
+    };
+
+    if (telegramUser.first_name) {
+      const fullName = telegramUser.last_name 
+        ? `${telegramUser.first_name} ${telegramUser.last_name}`
+        : telegramUser.first_name;
+      
+      // Определяем пол по имени (простая логика)
+      const isMale = /[а-яё]*(ов|ев|ин|ый|ой|ий|овский|евский|инский)$/i.test(fullName);
+      const isFemale = /[а-яё]*(ова|ева|ина|ая|яя|ая|овская|евская|инская)$/i.test(fullName);
+      
+      let gender = 'unknown';
+      let avatar = '👤';
+      
+      if (isMale) {
+        gender = 'male';
+        avatar = '👨';
+      } else if (isFemale) {
+        gender = 'female';
+        avatar = '👩';
+      }
+
+      setUser({
+        name: fullName,
+        email: telegramUser.username ? `${telegramUser.username}@telegram.org` : 'user@telegram.org',
+        joinDate: 'Сегодня',
+        plan: 'Premium',
+        status: 'Активен',
+        avatar: avatar,
+        gender: gender,
+        telegramId: telegramUser.id,
+        username: telegramUser.username
+      });
+    }
+  }, []);
 
   const stats = {
     totalConnections: 156,
@@ -111,10 +156,18 @@ const Profile = () => {
         <div className="account-info">
           <div className="info-row">
             <div className="info-label">
-              <Mail size={16} />
-              <span>Email</span>
+              <User size={16} />
+              <span>Telegram ID</span>
             </div>
-            <span className="info-value">{user.email}</span>
+            <span className="info-value">{user.telegramId || 'Не указан'}</span>
+          </div>
+          
+          <div className="info-row">
+            <div className="info-label">
+              <Mail size={16} />
+              <span>Username</span>
+            </div>
+            <span className="info-value">@{user.username || 'Не указан'}</span>
           </div>
           
           <div className="info-row">
@@ -160,13 +213,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Logout */}
-      <div className="card logout-card">
-        <button className="logout-btn">
-          <LogOut size={20} />
-          <span>Выйти из аккаунта</span>
-        </button>
-      </div>
     </div>
   );
 };

@@ -30,7 +30,7 @@ bot.onText(/\/start/, async (msg) => {
         {
           text: '🚀 Открыть приложение',
           web_app: {
-            url: config.WEBAPP_URL
+            url: `${config.WEBAPP_URL}?user_id=${msg.from.id}&first_name=${encodeURIComponent(msg.from.first_name)}&last_name=${encodeURIComponent(msg.from.last_name || '')}&username=${encodeURIComponent(msg.from.username || '')}&is_bot=${msg.from.is_bot}&language_code=${encodeURIComponent(msg.from.language_code || '')}`
           }
         }
       ],
