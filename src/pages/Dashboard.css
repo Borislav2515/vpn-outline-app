@@ -1,0 +1,448 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Traffic Card */
+.traffic-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.traffic-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 25s linear infinite;
+}
+
+.traffic-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 20px;
+}
+
+.traffic-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.traffic-info {
+  flex: 1;
+}
+
+.traffic-label {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.traffic-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.used {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.separator {
+  font-size: 20px;
+  opacity: 0.7;
+}
+
+.limit {
+  font-size: 20px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.traffic-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.remaining {
+  font-size: 12px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.traffic-details {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.traffic-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Server Card */
+.server-card {
+  position: relative;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #495057;
+}
+
+.card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.server-selector {
+  position: relative;
+}
+
+.server-select-btn {
+  width: 100%;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.server-select-btn:hover {
+  border-color: #667eea;
+  background: #fff;
+}
+
+.server-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.server-flag {
+  font-size: 24px;
+}
+
+.server-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.server-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.server-price {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.server-arrow {
+  color: #6c757d;
+  transition: transform 0.3s ease;
+}
+
+.server-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  margin-top: 8px;
+  overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.server-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f1f3f4;
+  transition: all 0.2s ease;
+}
+
+.server-option:last-child {
+  border-bottom: none;
+}
+
+.server-option:hover {
+  background: #f8f9fa;
+}
+
+.server-option .server-info {
+  flex: 1;
+}
+
+.server-location {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+.server-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.server-speed {
+  font-size: 11px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.server-load {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.server-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.buy-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.buy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Keys Card */
+.keys-card {
+  background: white;
+}
+
+.keys-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.key-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.key-item:hover {
+  border-color: #667eea;
+  background: #fff;
+}
+
+.key-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.key-server {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.key-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #28a745;
+}
+
+.key-expires {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.no-keys {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.no-keys h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  color: #495057;
+}
+
+.no-keys p {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Actions Card */
+.actions-card {
+  background: white;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.action-btn {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #495057;
+}
+
+.action-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.action-btn span {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .dashboard {
+    gap: 16px;
+  }
+  
+  .traffic-header {
+    gap: 12px;
+  }
+  
+  .traffic-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .used {
+    font-size: 24px;
+  }
+  
+  .limit {
+    font-size: 18px;
+  }
+  
+  .traffic-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .server-option {
+    padding: 12px;
+  }
+  
+  .server-stats {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .key-item {
+    padding: 12px;
+  }
+  
+  .actions-grid {
+    gap: 10px;
+  }
+  
+  .action-btn {
+    padding: 12px;
+  }
+} 
