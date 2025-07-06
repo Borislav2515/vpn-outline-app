@@ -104,18 +104,25 @@ const Dashboard = () => {
       try {
         const serverData = await outlineAPI.getServerInfo();
         setServerInfo(serverData);
-        setSelectedServer({
-          id: serverData.id,
-          name: serverData.name,
-          flag: serverData.flag,
-          location: serverData.location,
+        
+        // Создаём объект сервера на основе данных Outline
+        const outlineServer = {
+          id: 'outline-ny',
+          name: 'США (Восточное побережье)',
+          flag: '🇺🇸',
+          location: 'Нью-Йорк',
           price: '299 ₽',
           speed: '1 Гбит/с',
           load: '45%',
-          status: serverData.status
-        });
+          status: serverData.status || 'online'
+        };
+        
+        setSelectedServer(outlineServer);
+        console.log('✅ Сервер Outline загружен:', outlineServer);
       } catch (error) {
         console.error('Ошибка загрузки информации о сервере:', error);
+        // Если не удалось загрузить, выбираем первый сервер из списка
+        setSelectedServer(servers[0]);
       }
     };
 
@@ -127,8 +134,12 @@ const Dashboard = () => {
     
     setIsCreatingKey(true);
     try {
+      console.log('🚀 Создание ключа для сервера:', server);
+      
       const keyName = `Ключ ${server.name} - ${new Date().toLocaleDateString()}`;
       const newKey = await outlineAPI.createKey(keyName);
+      
+      console.log('✅ Ключ создан:', newKey);
       
       alert(`Ключ успешно создан!\n\nИмя: ${newKey.name}\nКлюч: ${newKey.accessUrl}\n\nСкопируйте ключ для использования в Outline Client.`);
       
@@ -137,7 +148,7 @@ const Dashboard = () => {
       setActiveKeys(updatedKeys);
       
     } catch (error) {
-      console.error('Ошибка создания ключа:', error);
+      console.error('❌ Ошибка создания ключа:', error);
       alert('Ошибка создания ключа. Попробуйте позже.');
     } finally {
       setIsCreatingKey(false);
