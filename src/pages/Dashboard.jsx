@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [showServerList, setShowServerList] = useState(false);
   const [serverInfo, setServerInfo] = useState(null);
   const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [isServerDropdownOpen, setIsServerDropdownOpen] = useState(false);
 
   const servers = [
     { 
@@ -189,62 +190,88 @@ const Dashboard = () => {
           <h3>Выбрать сервер для покупки</h3>
         </div>
         
-        <div className="server-selector">
-          <button 
-            className="server-select-btn"
-            onClick={() => setShowServerList(!showServerList)}
+        <div className="server-dropdown-container">
+          <div 
+            className="server-dropdown"
+            onClick={() => setIsServerDropdownOpen(!isServerDropdownOpen)}
           >
-            <div className="server-info">
-              <span className="server-flag">{selectedServer ? selectedServer.flag : '🌐'}</span>
-              <div className="server-details">
-                <span className="server-name">
-                  {selectedServer ? selectedServer.name : 'Выберите сервер'}
-                </span>
-                {selectedServer && (
-                  <span className="server-price">{selectedServer.price}</span>
-                )}
-              </div>
+            <div className="dropdown-selected">
+              {selectedServer ? (
+                <>
+                  <span className="server-flag">{selectedServer.flag}</span>
+                  <span className="server-name">{selectedServer.name}</span>
+                </>
+              ) : (
+                <span className="placeholder">Выберите страну</span>
+              )}
             </div>
-            <div className="server-arrow">▼</div>
-          </button>
+            <div className={`dropdown-arrow ${isServerDropdownOpen ? 'open' : ''}`}>
+              ▼
+            </div>
+          </div>
           
-          {showServerList && (
-            <div className="server-list">
+          {isServerDropdownOpen && (
+            <div className="server-dropdown-menu">
               {servers.map((server) => (
-                <div key={server.id} className="server-option">
+                <div 
+                  key={server.id} 
+                  className="dropdown-item"
+                  onClick={() => {
+                    setSelectedServer(server);
+                    setIsServerDropdownOpen(false);
+                  }}
+                >
+                  <span className="server-flag">{server.flag}</span>
                   <div className="server-info">
-                    <span className="server-flag">{server.flag}</span>
-                    <div className="server-details">
-                      <span className="server-name">{server.name}</span>
-                      <span className="server-location">{server.location}</span>
-                      <div className="server-stats">
-                        <span className="server-speed">{server.speed}</span>
-                        <span className="server-load">Нагрузка: {server.load}</span>
-                      </div>
-                    </div>
+                    <span className="server-name">{server.name}</span>
+                    <span className="server-location">{server.location}</span>
                   </div>
-                  <div className="server-actions">
-                    <span className="server-price">{server.price}</span>
-                    <button 
-                      className="buy-btn"
-                      onClick={() => handleBuyKey(server)}
-                      disabled={isCreatingKey}
-                    >
-                      {isCreatingKey ? (
-                        <span>Создание...</span>
-                      ) : (
-                        <>
-                          <Plus size={16} />
-                          Создать ключ
-                        </>
-                      )}
-                    </button>
+                  <div className="server-stats">
+                    <span className="ping">{server.load}</span>
+                    <span className="price">{server.price}</span>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+        
+        {selectedServer && (
+          <div className="selected-server-info">
+            <div className="server-card selected">
+              <div className="server-flag">{selectedServer.flag}</div>
+              <div className="server-info">
+                <h4>{selectedServer.name}</h4>
+                <p>{selectedServer.location}</p>
+                <div className="server-stats">
+                  <span className="speed">{selectedServer.speed}</span>
+                  <span className="load">Нагрузка: {selectedServer.load}</span>
+                </div>
+              </div>
+              <div className="server-status">
+                <div className={`status-indicator ${selectedServer.status}`}></div>
+              </div>
+            </div>
+            
+            <button 
+              className="create-key-btn"
+              onClick={() => handleBuyKey(selectedServer)}
+              disabled={isCreatingKey}
+            >
+              {isCreatingKey ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  Создание ключа...
+                </>
+              ) : (
+                <>
+                  <Plus size={16} />
+                  Создать ключ за {selectedServer.price}
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Active Keys */}
