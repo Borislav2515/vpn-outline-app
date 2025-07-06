@@ -44,20 +44,20 @@ const WalletPage = () => {
     loadWalletData();
   }, []);
 
-  const handleCopyKey = (key) => {
-    navigator.clipboard.writeText(key.accessUrl).then(() => {
+  const handleCopyKey = (keyUrl) => {
+    navigator.clipboard.writeText(keyUrl).then(() => {
       alert('Ключ скопирован в буфер обмена!');
     }).catch(() => {
       alert('Ошибка копирования ключа');
     });
   };
 
-  const handleDownloadKey = (key) => {
-    const blob = new Blob([key.accessUrl], { type: 'text/plain' });
+  const handleDownloadKey = (keyUrl, keyName) => {
+    const blob = new Blob([keyUrl], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${key.name}.txt`;
+    a.download = `${keyName}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -101,27 +101,6 @@ const WalletPage = () => {
     { icon: History, title: 'История', color: '#6c757d' },
     { icon: TrendingUp, title: 'Статистика', color: '#ffc107' }
   ];
-
-  const handleCopyKey = (key) => {
-    navigator.clipboard.writeText(key);
-    alert('Ключ скопирован в буфер обмена!');
-  };
-
-  const handleDownloadKey = (key, name) => {
-    const blob = new Blob([key], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${name}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDeleteKey = (keyId) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот ключ?')) {
-      alert('Ключ удален!');
-    }
-  };
 
   return (
     <div className="wallet">
@@ -235,14 +214,14 @@ const WalletPage = () => {
                     </button>
                     <button 
                       className="key-action-btn"
-                      onClick={() => handleCopyKey(key)}
+                      onClick={() => handleCopyKey(key.accessUrl)}
                       title="Копировать"
                     >
                       <Copy size={16} />
                     </button>
                     <button 
                       className="key-action-btn"
-                      onClick={() => handleDownloadKey(key)}
+                      onClick={() => handleDownloadKey(key.accessUrl, key.name)}
                       title="Скачать"
                     >
                       <Download size={16} />
